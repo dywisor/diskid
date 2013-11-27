@@ -66,6 +66,7 @@ Running it
 Usage::
 
    $ diskid [-h,--help] [-x,--export] [-m,--mdev] <device> [<device>...]
+   $ ata_id [-h,--help] [-x,--export] <device>
 
 Options:
 
