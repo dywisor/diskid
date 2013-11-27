@@ -33,15 +33,15 @@ Dependencies:
 * libc (tested with glibc 2.15; uclibc to follow)
 
 
-Simply run :code:`make` or :code:`make diskid`.
+Simply run ``make`` or ``make diskid``.
 
-``MINIMAL=1`` may be passed to :code:`make` if the full output of the
+``MINIMAL=1`` may be passed to ``make`` if the full output of the
 ``--export`` option is not required, which saves some space.
-Likewise, ``STATIC=1`` instructs :code:`make` to do a static build::
+Likewise, ``STATIC=1`` instructs ``make`` to do a static build::
 
    $ make MINIMAL=1 STATIC=1 diskid
 
-The `ata_id` program, which (mostly) behaves like its original, can be built with :code:`make ata_id`.
+The `ata_id` program, which (mostly) behaves like its original, can be built with ``make ata_id``.
 
 When cross-compiling, ``CROSS_COMPILE`` or ``TARGET_CC`` should be set.
 
@@ -82,7 +82,7 @@ Options:
 
 
 Note that the output of ``--export`` is identical to ``--mdev``
-if diskid has been built with :code:`MINIMAL=1`.
+if diskid has been built with ``MINIMAL=1``.
 
 
 ----------
