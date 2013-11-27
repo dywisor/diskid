@@ -69,4 +69,4 @@ clean:
 .PHONY += install
 install:
 	install -d -m 0755 -- $(SBIN)
-	install -m 0755 -T $(SBIN) -- diskid
+	install -m 0755 -t $(SBIN) -- diskid
