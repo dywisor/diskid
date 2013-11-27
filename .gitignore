@@ -1,0 +1,29 @@
+!.gitignore
+
+# C
+*.o
+*.su
+*.so
+*.so.*
+*.a
+
+# auto backup files
+*~
+~*
+*.sw[a-z]
+*.bak*
+
+dist/
+release/
+build/
+
+# local files
+local/
+*.local
+*.local.*
+
+# files/dirs to ignore
+.keep
+
+/diskid
+/ata_id
