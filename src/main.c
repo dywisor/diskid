@@ -172,7 +172,7 @@ int main ( const int argc, char* const* argv ) {
       { "export", no_argument,       NULL, 'x' },
       { "mdev",   no_argument,       NULL, 'm' },
       { "help",   no_argument,       NULL, 'h' },
-      { "type",   required_argument, NULL, 't' },
+      /*{ "type",   required_argument, NULL, 't' },*/
       {0}
    };
 
@@ -181,7 +181,7 @@ int main ( const int argc, char* const* argv ) {
    want_mdev_export  = 0;
    /*want_disk_type    = DISK_TYPE_ALL;*/
    while (
-      ( i = getopt_long ( argc, argv, "xht:", long_options, NULL ) ) != -1
+      ( i = getopt_long ( argc, argv, "xhm", long_options, NULL ) ) != -1
    ) {
       switch ( i ) {
          case 'h':
