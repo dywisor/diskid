@@ -1,0 +1,118 @@
+#!/bin/busybox ash
+set +f
+set -u
+
+X_DISKID="@@X_DISKID@@"
+##[ -x "${X_DISKID}" ] || exit 5
+[ -n "${X_DISKID}" ] || exit 5
+
+DISKID_DIR=/dev/disk/by-id
+mkdir -p "${DISKID_DIR}" || exit 4
+
+
+die() {
+   [ -z "${1-}" ] || echo "${1}" 1>&2
+   exit ${2:-2}
+}
+
+_dosym() {
+   ${X_PRETEND-} ln -s -f -- "${1}" "${2}" && echo "${2}"
+}
+
+_dosym_list() {
+   ${X_PRETEND-} ln -s -f -- "${1}" "${2}" && echo "${3}:${2}"
+}
+
+
+process_device() {
+   local ID_BUS ID_SERIAL ID_WWN_WITH_EXTENSION
+   local dev_name part_suf link_target
+   local ret=0
+
+   dev_name="${1##*/}"
+   part_suf=
+   case "${dev_name}" in
+      [sh]d*[a-z]*)
+         # sda, sdX, sdaa, ...
+         part_suf="${dev_name#[sh]d*[a-z]}"
+         [ -z "${part_suf}" ] || part_suf="-part${part_suf}"
+         link_target="../../${dev_name}"
+      ;;
+      sr*)
+         link_target="../../${dev_name}"
+      ;;
+      *)
+         # rel := unknown
+         link_target="${1}"
+      ;;
+   esac
+
+   # get ID_BUS, ID_SERIAL, ID_WWN_WITH_EXTENSION
+   eval "$(${X_DISKID} --mdev "${1}")"
+
+   if [ -n "${ID_BUS-}" ] && [ -n "${ID_SERIAL-}" ]; then
+      ${f_dosym} "${link_target}" \
+         "${DISKID_DIR}/${ID_BUS}-${ID_SERIAL}${part_suf}" "${1}" || ret=1
+   fi
+
+   if [ -n "${ID_WWN_WITH_EXTENSION-}" ]; then
+      ${f_dosym} "${link_target}" \
+         "${DISKID_DIR}/wwn-${ID_WWN_WITH_EXTENSION}${part_suf}" "${1}" || ret=1
+   fi
+}
+
+
+
+devl=
+want_all=n
+X_PRETEND=
+f_dosym=_dosym
+
+for arg; do
+   case "${arg}" in
+      '-h'|'--help')
+         echo "Usage: ${0} [-h] [-p] [-L] [-a|dev...]"
+         exit 0
+      ;;
+      '-a'|'--all')
+         want_all=y
+      ;;
+      '-p'|'--pretend')
+         X_PRETEND=true
+      ;;
+      '-L'|'--list-links')
+         f_dosym=_dosym_list
+      ;;
+      '')
+         true
+      ;;
+      /dev/?*)
+         devl="${devl} ${arg}"
+      ;;
+      *)
+         die "unknown arg '${arg}'" 64
+      ;;
+   esac
+   shift
+done
+
+
+rc=0
+
+if [ "${want_all}" = "y" ]; then
+   # any other devices with an ata(-like) disk id?
+   ##devl="$( echo /dev/[sh]d[a-z]* /dev/sr* )"
+   for dev in /dev/[sh]d[a-z]* /dev/sr*; do
+      if [ -b "${dev}" ]; then
+         process_device "${dev}" || rc=1
+      fi
+   done
+
+elif [ -z "${devl}" ]; then
+   die "no devices given." 64
+
+else
+   for dev in ${devl}; do process_device "${dev}" || rc=1; done
+fi
+
+exit ${rc}

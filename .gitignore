@@ -27,3 +27,4 @@ local/
 
 /diskid
 /ata_id
+/create_diskid_links.sh

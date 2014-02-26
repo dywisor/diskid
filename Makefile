@@ -1,16 +1,22 @@
 FOR_MDEV := 0
 DESTDIR  :=
 
+_ALL_TARGETS := diskid
+
 # control build behavior: static and/or minimal executable?
 ifeq ($(FOR_MDEV),$(filter $(FOR_MDEV),y Y 1 yes YES true TRUE))
-	SBIN    := $(DESTDIR)/lib/mdev
+	SBIN    := /lib/mdev
 	STATIC  := 1
 	MINIMAL := 1
+	_ALL_TARGETS += create_diskid_links.sh
 else
-	SBIN    := $(DESTDIR)/sbin
+	SBIN    := /sbin
 	STATIC  := 0
 	MINIMAL := 0
 endif
+
+_SBIN := $(DESTDIR)$(SBIN)
+X_DISKID := $(SBIN)/diskid
 
 
 # default -W... flags for CFLAGS
@@ -54,13 +60,19 @@ LINK_O    = $(TARGET_CC) $(CC_OPTS) $(CPPFLAGS) $(LDFLAGS)
 PHONY :=
 
 PHONY += all
-all: diskid
+all: $(_ALL_TARGETS)
 
 diskid: $(COMMON_OBJECTS) $(DISKID_OBJECTS)
 	$(LINK_O) $^ -o $@
 
 ata_id: $(COMMON_OBJECTS) $(ATAID_OBJECTS)
 	$(LINK_O) $^ -o $@
+
+%.sh: %.sh.in
+	sed -e "s|@@X_DISKID@@|$(X_DISKID)|g" $< > $@.make_tmp
+	sh -n $@.make_tmp
+	chmod +x $@.make_tmp
+	mv -f -- $@.make_tmp $@
 
 $(O):
 	mkdir -p $(O)
@@ -77,13 +89,13 @@ clean:
 # install targets
 PHONY += install
 install:
-	install -d -m 0755 -- $(SBIN)
-	install -m 0755 -t $(SBIN) -- diskid
+	install -d -m 0755 -- $(_SBIN)
+	install -m 0755 -t $(_SBIN) -- $(_ALL_TARGETS)
 
 
 PHONY += uninstall
 uninstall:
-	rm -f -- $(SBIN)/diskid
+	rm -f -- $(addprefix $(_SBIN)/, $(_ALL_TARGETS))
 
 
 PHONY += help
@@ -91,8 +103,8 @@ help:
 	@echo  'Targets:'
 	@echo  '  all           - build all targets marked with [*]'
 	@echo  '  clean         - remove generated files'
-	@echo  '  install       - install diskid to SBIN'
-	@echo  '                  (default: $(SBIN))'
+	@echo  '  install       - install diskid to DESTDIR/SBIN'
+	@echo  '                  (default: $(_SBIN))'
 	@echo  '  uninstall     -'
 	@echo  '* diskid        - build diskid'
 	@echo  '  ata_id        - build ata_id'
@@ -106,9 +118,10 @@ help:
 	@echo  '  O             - build dir'
 	@echo  '                  (default: $(O))'
 	@echo  '  FOR_MDEV=0|1  - use mdev-specific defaults:'
-	@echo  '                  * SBIN    = DESTDIR/lib/mdev'
+	@echo  '                  * SBIN    = /lib/mdev'
 	@echo  '                  * MINIMAL = 1'
 	@echo  '                  * STATIC  = 1'
+	@echo  '                  Also, build/install create_diskid_links.sh'
 	@echo  '                  (default: $(FOR_MDEV))'
 
 .PHONY: $(PHONY)
