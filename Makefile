@@ -1,9 +1,17 @@
-DESTDIR :=
-SBIN    := $(DESTDIR)/sbin
+FOR_MDEV := 0
+DESTDIR  :=
 
 # control build behavior: static and/or minimal executable?
-STATIC  ?= 0
-MINIMAL ?= 0
+ifeq ($(FOR_MDEV),$(filter $(FOR_MDEV),y Y 1 yes YES true TRUE))
+	SBIN    := $(DESTDIR)/lib/mdev
+	STATIC  := 1
+	MINIMAL := 1
+else
+	SBIN    := $(DESTDIR)/sbin
+	STATIC  := 0
+	MINIMAL := 0
+endif
+
 
 # default -W... flags for CFLAGS
 _WARNFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter
@@ -43,8 +51,9 @@ COMPILE_C = $(TARGET_CC) $(CC_OPTS) $(CPPFLAGS) $(CFLAGS) -c
 LINK_O    = $(TARGET_CC) $(CC_OPTS) $(CPPFLAGS) $(LDFLAGS)
 
 
-.PHONY =
+PHONY :=
 
+PHONY += all
 all: diskid
 
 diskid: $(COMMON_OBJECTS) $(DISKID_OBJECTS)
@@ -59,14 +68,47 @@ $(O):
 $(O)/%.o: $(SRCDIR)/%.c | $(O)
 	$(COMPILE_C) $< -o $@
 
-.PHONY += clean
+PHONY += clean
 clean:
 	-rm -f -- $(COMMON_OBJECTS) $(DISKID_OBJECTS) $(ATAID_OBJECTS) diskid ata_id
 	-rmdir $(O)
 
 
 # install targets
-.PHONY += install
+PHONY += install
 install:
 	install -d -m 0755 -- $(SBIN)
 	install -m 0755 -t $(SBIN) -- diskid
+
+
+PHONY += uninstall
+uninstall:
+	rm -f -- $(SBIN)/diskid
+
+
+PHONY += help
+help:
+	@echo  'Targets:'
+	@echo  '  all           - build all targets marked with [*]'
+	@echo  '  clean         - remove generated files'
+	@echo  '  install       - install diskid to SBIN'
+	@echo  '                  (default: $(SBIN))'
+	@echo  '  uninstall     -'
+	@echo  '* diskid        - build diskid'
+	@echo  '  ata_id        - build ata_id'
+	@echo  ''
+	@echo  'Options/Vars:'
+	@echo  '  MINIMAL=0|1   - whether to build a minimal variant of diskid/ata_id'
+	@echo  '                  (default: $(MINIMAL))'
+	@echo  '  STATIC=0|1    - whether to build a static variant of diskid/ata_id'
+	@echo  '                  (default: $(STATIC))'
+	@echo  '  DESTDIR, SBIN - paths for [un]install'
+	@echo  '  O             - build dir'
+	@echo  '                  (default: $(O))'
+	@echo  '  FOR_MDEV=0|1  - use mdev-specific defaults:'
+	@echo  '                  * SBIN    = DESTDIR/lib/mdev'
+	@echo  '                  * MINIMAL = 1'
+	@echo  '                  * STATIC  = 1'
+	@echo  '                  (default: $(FOR_MDEV))'
+
+.PHONY: $(PHONY)
