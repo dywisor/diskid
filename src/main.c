@@ -103,7 +103,7 @@ static int handle_device (
    } else {
       set_disk_type_none ( node );
       fprintf ( stderr,
-         "failed to detect disk type for device '%s''\n", node->device
+         "failed to detect disk type for device '%s'\n", node->device
       );
       goto handle_device_exit;
    }
